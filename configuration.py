@@ -29,12 +29,12 @@ def gen_config_rn():
     config['epsilon'] = 1e-5
 
     # training related
-    config['train_num'] = 200
-    config['batch_size'] = 10
+    config['train_num'] = 390400
+    config['batch_size'] = 256
     config['train_iteration'] = 100
 
     # validation_related
-    config['validate_num'] = 100
+    config['validate_num'] = 10240
     config['tolerate_step'] = 5
     config['tolerate_acc_up'] = 0.01
     return config
