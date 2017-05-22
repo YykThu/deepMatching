@@ -1,4 +1,5 @@
 from component import *
+from theano.tensor import signal
 
 
 class Encoder(object):
@@ -36,7 +37,10 @@ class Encoder(object):
                                  sequences=[id_sequence_reverse, mask_sequence_reverse],
                                  outputs_info=out_info,
                                  n_steps=n_steps)
-        return T.concatenate([hl[-1], hr[-1]], axis=1)
+
+        temp_encode = T.concatenate([hl, hr], axis=2)
+        temp_encode = T.max(temp_encode, axis=0)
+        return temp_encode
 
 
 class CompModel(object):
@@ -97,24 +101,38 @@ class ScoreModel(object):
         word_vector = T.sum(scores * share_word_embed, axis=0)
         return word_vector
 
+
+class CnnEncoder(object):
+
+    def __init__(self, dim_in, dim_out, embed, cf, prex='CnnEncoder'):
+        self.dim_in = dim_in
+        self.dim_out = dim_out
+        self.embed = embed
+        self.cf = cf
+        self.prex = prex
+
+
 if __name__ == '__main__':
-    # id_seq = T.imatrix()
-    # mask_seq = T.imatrix()
-    # encoder = Encoder(dim_in=256, dim_encode=128, cf=config)
-    # hs = encoder.forward(id_seq, mask_seq)
-    # hs_ = theano.function(inputs=[id_seq, mask_seq], outputs=hs)
-    # id_seq_test = np.random.randint(low=0, high=5, size=[20, 10]).astype(dtype=np.int32)
-    # mask_seq_test = np.random.randint(low=0, high=2, size=[20, 10]).astype(dtype=np.int32)
-    # print hs_(id_seq_test, mask_seq_test).shape
-    q1_encode = T.matrix()
-    q2_encode = T.matrix()
-    shared_word = T.ivector()
-    model = ScoreModel(dim_in=512, dim_word=10, dim_hid=64, cf=config)
-    score = model.forward(shared_word, q1_encode, q2_encode)
-    f = theano.function(inputs=[shared_word, q1_encode, q2_encode], outputs=score, on_unused_input='ignore')
-    fake_q1 = np.random.rand(5, 256).astype(dtype=floatX)
-    fake_q2 = np.random.rand(5, 256).astype(dtype=floatX)
-    fake_shared_word = np.random.randint(low=0, high=10, size=[5]).astype(dtype=np.int32)
-    print f(fake_shared_word, fake_q1, fake_q2).shape
+    id_seq = T.imatrix()
+    mask_seq = T.imatrix()
+    embed = Embed(config)
+    encoder = Encoder(dim_in=300, dim_encode=128, embed=embed, cf=config)
+    hs = encoder.forward(id_seq, mask_seq)
+    hs_ = theano.function(inputs=[id_seq, mask_seq], outputs=hs)
+    id_seq_test = np.random.randint(low=0, high=5, size=[20, 10]).astype(dtype=np.int32)
+    mask_seq_test = np.random.randint(low=0, high=2, size=[20, 10]).astype(dtype=np.int32)
+    print hs_(id_seq_test, mask_seq_test).shape
+
+
+    # q1_encode = T.matrix()
+    # q2_encode = T.matrix()
+    # shared_word = T.ivector()
+    # model = ScoreModel(dim_in=512, dim_word=10, dim_hid=64, cf=config)
+    # score = model.forward(shared_word, q1_encode, q2_encode)
+    # f = theano.function(inputs=[shared_word, q1_encode, q2_encode], outputs=score, on_unused_input='ignore')
+    # fake_q1 = np.random.rand(5, 256).astype(dtype=floatX)
+    # fake_q2 = np.random.rand(5, 256).astype(dtype=floatX)
+    # fake_shared_word = np.random.randint(low=0, high=10, size=[5]).astype(dtype=np.int32)
+    # print f(fake_shared_word, fake_q1, fake_q2).shape
 
 
